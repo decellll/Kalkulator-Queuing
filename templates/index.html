@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queueing Theory Calculator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .calculator-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .title {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #444;
+        }
+        .divider {
+            height: 2px;
+            background-color: #90EE90;
+            margin: 20px 0;
+        }
+        .result-field {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h2 class="title">Queueing Theory Calculator</h2>
+
+        <form id="queueForm" method="post">
+            <div class="mb-3">
+                <label class="form-label">Type of Queue</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="queue_type" id="mm1" value="M/M/1" checked>
+                        <label class="form-check-label" for="mm1">M/M/1</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="queue_type" id="mms" value="M/M/S">
+                        <label class="form-check-label" for="mms">M/M/S</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="arrival_rate" class="form-label">Arrival rate (λ)</label>
+                <input type="number" class="form-control" id="arrival_rate" name="arrival_rate" step="0.01" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="service_rate" class="form-label">Service rate (μ)</label>
+                <input type="number" class="form-control" id="service_rate" name="service_rate" step="0.01" required>
+            </div>
+
+            <div id="servers_input" class="mb-3" style="display: none;">
+                <label for="servers" class="form-label">Number of Servers (s)</label>
+                <input type="number" class="form-control" id="servers" name="servers" value="1" min="1" step="1">
+            </div>
+
+            <button type="submit" class="btn btn-primary mb-3">Calculate</button>
+
+            <div class="divider"></div>
+
+            <!-- Results Section -->
+            <div class="mb-3 result-field">
+                <label class="form-label">Traffic intensity (ρ)</label>
+                <input type="text" class="form-control" id="traffic_intensity" readonly>
+            </div>
+
+            <div class="mb-3 result-field">
+                <label class="form-label">Average Number of Customer (L)</label>
+                <input type="text" class="form-control" id="avg_customers" readonly>
+            </div>
+
+            <div class="mb-3 result-field">
+                <label class="form-label">Time in Queue</label>
+                <input type="text" class="form-control" id="time_in_queue" readonly>
+            </div>
+
+            <div class="mb-3 result-field">
+                <label class="form-label">Number of Customer in the Queue (LQ)</label>
+                <input type="text" class="form-control" id="customers_in_queue" readonly>
+            </div>
+
+            <div class="mb-3 result-field">
+                <label class="form-label">Probability of zero customers in the queue (P0)</label>
+                <input type="text" class="form-control" id="p0" readonly>
+            </div>
+
+            <div class="mb-3 result-field">
+                <label class="form-label">Probability of Queue with</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="pn" readonly>
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Show/hide servers input based on queue type
+            $('input[name="queue_type"]').change(function() {
+                if ($(this).val() === 'M/M/S') {
+                    $('#servers_input').show();
+                } else {
+                    $('#servers_input').hide();
+                }
+            });
+
+            $('#queueForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                $.ajax({
+                    url: '/calculate',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.error) {
+                            alert(response.error);
+                            return;
+                        }
+                        
+                        $('#traffic_intensity').val(response.traffic_intensity);
+                        $('#avg_customers').val(response.avg_customers);
+                        $('#time_in_queue').val(response.time_in_queue);
+                        $('#customers_in_queue').val(response.customers_in_queue);
+                        $('#p0').val(response.p0);
+                        $('#pn').val(response.pn * 100);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + error);
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
